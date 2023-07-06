@@ -1,25 +1,6 @@
 
+![image](https://github.com/ayoub-kplr/Spark-movie-recommendation-md/assets/123752166/5be3bb76-1acc-450f-818f-c6cb06974828)
 
-/SPARK-MOVIE
-│   Dockerfile (à faire)
-│   requirements.txt
-│
-└───app
-    │   app.py (à faire)
-    │   engine.py (à faire)
-    │   server.py (à faire)
-    │
-    ├───ml-latest
-    │       movies.csv
-    │       new-ratings.csv
-    │       ratings.csv
-    │
-    ├───static
-    │       index.js
-    │       omr.css
-    │
-    └───templates
-            index.html
 
 Workshop 0:
 
