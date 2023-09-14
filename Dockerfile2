@@ -14,20 +14,12 @@ COPY . /app
 RUN pip install flask
 
 # Ajoutez ici les commandes pour installer Spark et ses dépendances
-# # Installer les dépendances de Spark
-# RUN apt-get update
-# RUN apt-get -y upgrade
-# # Installer Java 8 requis pour Spark
-# RUN apt-get install -y openjdk-11-jdk && \ 
-#     apt-get clean
-
-
-
-# Mettez à jour les références aux dépôts APT pour Java 11
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:openjdk-r/ppa && \
-    apt-get update
+# Installer les dépendances de Spark
+RUN apt-get update
+RUN apt-get -y upgrade
+# Installer Java 8 requis pour Spark
+RUN apt-get install -y openjdk-11-jdk && \ 
+    apt-get clean
 
 
 
