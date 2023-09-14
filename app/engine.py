@@ -13,7 +13,11 @@ class RecommendationEngine:
     def is_user_known(self, user_id):
         # Méthode pour vérifier si un utilisateur est connu
         ...
-        
+        faT = spark.sql("SELECT userId FROM Fat_parquet")
+
+        max_user_id = faT.agg(max("userId")).collect()[0][0]
+
+        return user_id is not None and user_id <= self.max_user_identifier
     def get_movie(self, movie_id):
         # Méthode pour obtenir un film
         ...
@@ -67,11 +71,17 @@ class RecommendationEngine:
     def __train_model(self):
         # Méthode privée pour entraîner le modèle avec ALS
         ...
-        
+        # Créez un objet ALS
+        als = ALS(rank=10, maxIter=10, userCol='userId', itemCol='movieId', ratingCol='rating',
+          coldStartStrategy="drop")  # Vous devriez spécifier 'ratingCol' si ce n'est pas déjà fait
+        model = als.fit(fat_boy)
+
+
     def __evaluate(self):
         # Méthode privée pour évaluer le modèle en calculant l'erreur quadratique moyenne
         ...
-
+        
+        
     def __init__(self, sc, movies_set_path, ratings_set_path):
         # Méthode d'initialisation pour charger les ensembles de données et entraîner le modèle
         ...
