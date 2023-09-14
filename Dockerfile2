@@ -1,0 +1,54 @@
+# Utilisez une image de base avec Python (par exemple, Python 3.8)
+FROM python:latest
+
+
+# Créez un répertoire de travail dans le conteneur
+WORKDIR /app
+
+
+# Copiez le contenu de votre répertoire local (où se trouve votre application Flask) dans le conteneur
+COPY . /app
+
+
+# Installez les dépendances de Flask et Spark
+RUN pip install flask
+
+# Ajoutez ici les commandes pour installer Spark et ses dépendances
+# # Installer les dépendances de Spark
+# RUN apt-get update
+# RUN apt-get -y upgrade
+# # Installer Java 8 requis pour Spark
+# RUN apt-get install -y openjdk-11-jdk && \ 
+#     apt-get clean
+
+
+
+# Mettez à jour les références aux dépôts APT pour Java 11
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:openjdk-r/ppa && \
+    apt-get update
+
+
+
+
+# Téléchargez Spark (remplacez URL et version par celle que vous souhaitez utiliser)
+RUN wget https://downloads.apache.org/spark/spark-3.3.3/spark-3.3.3-bin-hadoop3.tgz && \
+    tar -xvzf spark-3.3.3-bin-hadoop3.tgz && \
+    mv spark-3.3.3-bin-hadoop3 /spark && \
+    rm spark-3.3.3-bin-hadoop3.tgz
+
+# Définir les variables d'environnement Spark
+ENV SPARK_HOME /spark
+ENV PATH $SPARK_HOME/bin:$PATH
+
+# Installation de Python PySpark
+RUN pip install pyspark
+
+
+# Exposez le port sur lequel votre application Flask s'exécute (par défaut, 5000)
+EXPOSE 5000
+
+
+# Commande pour démarrer votre application Flask
+CMD ["python", "app.py"]
