@@ -6,14 +6,6 @@ spark = SparkSession \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
-from pyspark.sql import SparkSession
-
-spark = SparkSession \
-    .builder \
-    .appName("Python Spark SQL basic example") \
-    .config("spark.some.config.option", "some-value") \
-    .getOrCreate()
-
 # File location and type
 file_location = "/workspace/Spark-movie-recommendation-md/app/ml-latest/movies.csv"
 file_type = "csv"
