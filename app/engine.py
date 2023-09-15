@@ -3,7 +3,7 @@ from pyspark.sql.functions import explode, col
 from pyspark.ml.recommendation import ALS
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.sql import SQLContext
-# from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession
 
 
 class RecommendationEngine:
@@ -39,15 +39,34 @@ class RecommendationEngine:
 
     def get_movie(self, movie_id=None):
         # Méthode pour obtenir un film
-        
+        fat_boy.createOrReplaceTempView("Fat_parquet")
+
+        # Utilisez une sous-requête pour calculer le nombre total de ratings par film
+        num_ratings = spark.sql("""
+            SELECT movieId, COUNT(rating) AS num_ratings
+            FROM Fat_parquet
+            GROUP BY movieId
+        """)
+
+        # Créez une vue temporaire pour le DataFrame num_ratings
+        num_ratings.createOrReplaceTempView("Num_Ratings")
+
+        # Utilisez la vue temporaire pour sélectionner les films avec le nombre total de ratings
+        best_movies = spark.sql("""
+            SELECT f.movieId, f.title, n.num_ratings, AVG(f.rating) AS avg_rating
+            FROM Fat_parquet f
+            JOIN Num_Ratings n ON f.movieId = n.movieId
+            GROUP BY f.movieId, f.title, n.num_ratings
+            ORDER BY num_ratings DESC , avg_rating DESC LIMIT 30
+        """)
         if movie_id is None:
             # Obtenez le nombre total de lignes dans le DataFrame
-            total_rows = best_movies_df.count()
+            total_rows = best_movies.count()
             # Générez un échantillon aléatoire avec une fraction d'échantillonnage de 1/N
             random_row = best_movies_df.sample(withReplacement=False, fraction=1.0/total_rows).first()
             return self.movies_df.filter(col("movieId") == random_row.movieId)
         else:
-            return self.movies_df.filter(col("movieId") == movie_id)         
+            return self.movies.filter(col("movieId") == movie_id)         
 
 
     def get_ratings_for_user(self, user_id):
@@ -73,7 +92,7 @@ class RecommendationEngine:
         # else:
         #     print("Vous n'avez pas donné de note pour ce film.")
 
-        return self.ratings_df.filter(col("userId") == user_id)
+        return self.fat_boy_parquet.filter(col("userId") == user_id)
 
 
     def add_ratings(self, user_id, ratings):
@@ -83,7 +102,7 @@ class RecommendationEngine:
         # fat_boy = fat_boy.union(new_row)
 
         new_ratings_df = self.spark.createDataFrame([Row(userId=user_id, movieId=rating["movieId"], rating=rating["rating"]) for rating in ratings])
-        self.ratings_df = self.ratings_df.union(new_ratings_df)
+        self.ratings_df = self.fat_boy_parquet.union(new_ratings_df)
         self.__train_model()
 
         
@@ -120,19 +139,18 @@ class RecommendationEngine:
         # Méthode privée pour entraîner le modèle avec ALS
         ...
         # # Créez un objet ALS
-        # als = ALS(rank=10, maxIter=10, userCol='userId', itemCol='movieId', ratingCol='rating',
-        #   coldStartStrategy="drop")  # Vous devriez spécifier 'ratingCol' si ce n'est pas déjà fait
-        # model = als.fit(fat_boy)
+        als = ALS(rank=10, maxIter=10, userCol='userId', itemCol='movieId', ratingCol='rating', coldStartStrategy="drop")  # Vous devriez spécifier 'ratingCol' si ce n'est pas déjà fait
+        model = als.fit(fat_boy_parquet)
 
-        als = ALS(maxIter=self.maxIter, regParam=self.regParam, userCol="userId", itemCol="movieId", ratingCol="rating")
-        model = als.fit(self.ratings_df)
+        #als = ALS(maxIter=self.maxIter, regParam=self.regParam, userCol="userId", itemCol="movieId", ratingCol="rating")
+        #model = als.fit(self.ratings_df)
         self.model = model
         # Vous pouvez appeler d'autres méthodes d'évaluation ici, comme __evaluate().
 
 
     def __evaluate(self):
         # Méthode privée pour évaluer le modèle en calculant l'erreur quadratique moyenne
-        predictions = self.model.transform(self.ratings_df)
+        predictions = self.model.transform(self.fat_boy_parquet)
         evaluator = RegressionEvaluator(metricName="rmse", labelCol="rating", predictionCol="prediction")
         rmse = evaluator.evaluate(predictions)
         print("Root Mean Squared Error (RMSE):", rmse)
@@ -141,11 +159,11 @@ class RecommendationEngine:
     def __init__(self, sc, movies_set_path, ratings_set_path):
         # Méthode d'initialisation pour charger les ensembles de données et entraîner le modèle
         ...
-    def __init__(self, sc, movies_set_path, ratings_set_path, maxIter=10, regParam=0.1):
+
         self.spark = SparkSession.builder.appName("RecommendationEngine").getOrCreate()
         self.sc = sc
-        self.maxIter = maxIter
-        self.regParam = regParam
+        #self.maxIter = maxIter
+        #self.regParam = regParam
         self.movies_set_path = movies_set_path
         self.ratings_set_path = ratings_set_path
         self.__train_model()
