@@ -1,33 +1,27 @@
-# Utilisez une image OpenJDK comme point de départ
-FROM openjdk:8
+FROM apache/spark:3.4.0
+
+# Install any additional dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip
 
 
-# Installez Python et pip
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Set the working directory
+WORKDIR /app
 
-
-# Installez Spark
-RUN wget -q https://downloads.apache.org/spark/spark-3.3.3/spark-3.3.3-bin-hadoop3.tgz && \
-    tar -xzf spark-3.3.3-bin-hadoop3.tgz -C /opt --no-same-owner && \
-    rm spark-3.3.3-bin-hadoop3.tgz
-
-
-# Configurez l'environnement Spark
-ENV SPARK_HOME /opt/spark-3.3.3-bin-hadoop3
-ENV PATH $SPARK_HOME/bin:$PATH
-
-
-# Installez Flask et les dépendances Python
-RUN pip3 install Flask
-
-
-# Copiez votre application Flask dans l'image
+# Copy the Spark project files to the container
 COPY ./app /app
 
+COPY ./requirements.txt /app
 
-# Exposez le port 5000 (ou tout autre port que votre application Flask utilise)
-EXPOSE 5000
+COPY ./app/ml-latest /ml-latest
 
+# Install Python dependencies
+RUN pip3 install -r requirements.txt
+# RUN sed -i "s/localhost/$(curl http://checkip.amazonaws.com)/g" static/index.js
 
-# Définissez la commande d'entrée
-CMD ["python", "/app/app.py"]
+# Expose the port for the web application
+EXPOSE 5432
+
+# Set the entry point
+CMD ["spark-submit", "server.py", "ml-latest/movies.csv", "ml-latest/ratings.csv"]
