@@ -6,14 +6,6 @@ spark = SparkSession \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
-from pyspark.sql import SparkSession
-
-spark = SparkSession \
-    .builder \
-    .appName("Python Spark SQL basic example") \
-    .config("spark.some.config.option", "some-value") \
-    .getOrCreate()
-
 # File location and type
 file_location = "/workspace/Spark-movie-recommendation-md/app/ml-latest/movies.csv"
 file_type = "csv"
@@ -93,3 +85,4 @@ fat_boy = fat_boy.withColumn("userId", F.col("userId").cast("int"))
 fat_boy = fat_boy.withColumn("movieId", F.col("movieId").cast("int"))
 fat_boy = fat_boy.withColumn("rating", F.col("rating").cast("int"))
 
+fat_boy.write.mode('overwrite').parquet("/workspace/Spark-movie-recommendation-md/app/ml-latest/fat_boy.parquet")
