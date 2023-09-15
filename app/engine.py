@@ -8,9 +8,13 @@ from pyspark.sql import SQLContext
 
 class RecommendationEngine:
 
-    faT = spark.sql("SELECT userId FROM Fat_parquet")
+    fat_boy_parquet = spark.read.parquet("/workspace/Spark-movie-recommendation-md/app/ml-latest/fat_boy.parquet")
+    
+    fat_boy_parquet.createOrReplaceView("Fat_Boy")
 
-    max_user_id = faT.agg(max("userId")).collect()[0][0]
+    faT = spark.sql("SELECT userId FROM Fat_Boy")
+
+    max_user_identifier = faT.agg(max("userId")).collect()[0][0]
 
 
     def create_user(self, user_id=None):
